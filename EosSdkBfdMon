@@ -39,6 +39,7 @@ SNMP Trap could be triggered off of it
 """
 
 import eossdk
+import syslog
 import sys
 import time
 import re
@@ -59,11 +60,15 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
     def on_initialized(self):
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD changes","0")
+        syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
         self.watch_all_bfd_sessions(True)
-        
+        #self.agentMgr_.status_set("BFD",str(self.bfdMgr_.interval('Ethernet1')))
+
     def on_bfd_session_status(self, bfdID, operState):
         """ Callback provided by BfdSessionHandler when a BFD status
         changes """
+        #Adding in this syslog message for debugging to see if this function ever gets called
+        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
         self.numBFDChanges_ += 1
         if operState == eossdk.BFD_SESSION_STATUS_UP:
             bfdState = 'UP'
@@ -79,8 +84,6 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
             bfdState = 'NA'
         lastChangeTime = re.sub( ' +', ' ', time.ctime() )
         self.tracer.trace5("The state of " + bfdID.to_string() + " is now " + bfdState)
-        # Update the interface's description with the latest change timestamp
-        self.bfdMgr_.description_is(bfdID, "Last status change at " + lastChangeTime)
         # Update this agent's status with new statistics:
         self.agentMgr_.status_set("Total BFD changes", str(self.numBFDChanges_))
         self.agentMgr_.status_set("Last change of " + bfdID.to_string(), bfdState)
@@ -88,6 +91,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
 
 
 if __name__ == '__main__':
+    syslog.openlog('myBFDLog',0,syslog.LOG_LOCAL4)
     sdk = eossdk.Sdk()
     _ = BFDMON(sdk.get_bfd_session_mgr(),sdk.get_agent_mgr())
     sdk.main_loop(sys.argv)
