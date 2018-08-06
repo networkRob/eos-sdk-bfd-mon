@@ -43,14 +43,16 @@ import syslog
 import sys
 import time
 import re
+import ctypes as ct
 
 __author__ = 'rmartin'
 __version__ = 1.0
 
-class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
+class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
     def __init__(self, bfdMgr, agentMgr):
         eossdk.AgentHandler.__init__(self,agentMgr)
         eossdk.BfdSessionHandler.__init__(self,bfdMgr)
+        #eossdk.BfdInterval.__init__(self,ct.c_uint16(100),ct.c_uint16(100),ct.c_uint8(3))
         self.tracer = eossdk.Tracer("EosSdkBFDMonitor")
         self.bfdMgr_ = bfdMgr
         self.agentMgr_ = agentMgr
@@ -62,7 +64,13 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.agentMgr_.status_set("Total BFD changes","0")
         syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
         self.watch_all_bfd_sessions(True)
-        #self.agentMgr_.status_set("BFD",str(self.bfdMgr_.interval('Ethernet1')))
+        #self.agentMgr_.status_set('bfd',str(dir(self.bfdMgr_)))
+        self.agentMgr_.status_set('default interval 1',self.bfdMgr_.default_interval().to_string())
+        #self.bfdMgr_.default_interval_is(200,200,1)
+        self.agentMgr_.status_set('default interval 2',self.bfdMgr_.default_interval().to_string())
+        #self.bfdMgr_.watch_all_bfd_sessions(True)
+        self.sess = self.bfdMgr_.session_iter()
+        self.agentMgr_.status_set('dir',str(dir(self.sess)))
 
     def on_bfd_session_status(self, bfdID, operState):
         """ Callback provided by BfdSessionHandler when a BFD status
