@@ -59,7 +59,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
         self.numBFDChanges_ = 0
         self.tracer.trace0("Constructed")
 
-    def on_initialized(self):
+    def on_initialized(self): 
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD changes","0")
         syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
