@@ -48,7 +48,7 @@ import ctypes as ct
 __author__ = 'rmartin'
 __version__ = 1.1
 
-class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
+class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
     def __init__(self, bfdMgr, agentMgr):
         eossdk.AgentHandler.__init__(self,agentMgr)
         eossdk.BfdSessionHandler.__init__(self,bfdMgr)
@@ -61,12 +61,15 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
     def on_initialized(self): 
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD changes","0")
-        syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
         self.watch_all_bfd_sessions(True)
-        self.sess = self.bfdMgr_.session_iter()
+        syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
+
     
-    def on_bfd_session_set(self,bfdID,):
-        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
+    def on_bfd_session_set(self,bfdID):
+        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status UP')
+
+    def on_bfd_session_del(self,bfdID):
+        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status DOWN')
 
     def on_bfd_session_status(self, bfdID, operState):
         """ Callback provided by BfdSessionHandler when a BFD status changes """
