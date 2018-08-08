@@ -46,7 +46,7 @@ import re
 import ctypes as ct
 
 __author__ = 'rmartin'
-__version__ = 1.0
+__version__ = 1.1
 
 class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
     def __init__(self, bfdMgr, agentMgr):
