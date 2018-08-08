@@ -43,7 +43,6 @@ import syslog
 import sys
 import time
 import re
-import ctypes as ct
 
 __author__ = 'rmartin'
 __version__ = 1.1
