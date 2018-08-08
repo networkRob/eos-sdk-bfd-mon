@@ -64,13 +64,6 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.watch_all_bfd_sessions(True)
         syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
 
-    
-    def on_bfd_session_set(self,bfdID):
-        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status UP')
-
-    def on_bfd_session_del(self,bfdID):
-        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status DOWN')
-
     def on_bfd_session_status(self, bfdID, operState):
         """ Callback provided by BfdSessionHandler when a BFD status changes """
         #Adding in this syslog message for debugging to see if this function ever gets called
