@@ -64,7 +64,6 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
         syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
         self.watch_all_bfd_sessions(True)
         self.sess = self.bfdMgr_.session_iter()
-        self.agentMgr_.status_set("Self",str(dir(self)))
     
     def on_bfd_session_set(self,bfdID,):
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
