@@ -43,9 +43,10 @@ import syslog
 import sys
 import time
 import re
+import ctypes as ct
 
 __author__ = 'rmartin'
-__version__ = 1.0
+__version__ = 1.1
 
 class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
     def __init__(self, bfdMgr, agentMgr):
@@ -57,16 +58,14 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.numBFDChanges_ = 0
         self.tracer.trace0("Constructed")
 
-    def on_initialized(self):
+    def on_initialized(self): 
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD changes","0")
-        syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
         self.watch_all_bfd_sessions(True)
-        #self.agentMgr_.status_set("BFD",str(self.bfdMgr_.interval('Ethernet1')))
+        syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
 
     def on_bfd_session_status(self, bfdID, operState):
-        """ Callback provided by BfdSessionHandler when a BFD status
-        changes """
+        """ Callback provided by BfdSessionHandler when a BFD status changes """
         #Adding in this syslog message for debugging to see if this function ever gets called
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
         self.numBFDChanges_ += 1
@@ -88,7 +87,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.agentMgr_.status_set("Total BFD changes", str(self.numBFDChanges_))
         self.agentMgr_.status_set("Last change of " + bfdID.to_string(), bfdState)
         self.agentMgr_.status_set("Last change time of " + bfdID.to_string(), lastChangeTime)
-
+        
 
 if __name__ == '__main__':
     syslog.openlog('myBFDLog',0,syslog.LOG_LOCAL4)
