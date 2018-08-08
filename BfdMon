@@ -73,8 +73,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
         self.agentMgr_.status_set('dir',str(dir(self.sess)))
 
     def on_bfd_session_status(self, bfdID, operState):
-        """ Callback provided by BfdSessionHandler when a BFD status
-        changes """
+        """ Callback provided by BfdSessionHandler when a BFD status changes """
         #Adding in this syslog message for debugging to see if this function ever gets called
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
         self.numBFDChanges_ += 1
