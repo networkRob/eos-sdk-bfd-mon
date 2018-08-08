@@ -63,10 +63,10 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdInterval):
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD changes","0")
         syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
-        self.watch_all_bfd_sessions(True)
-        #self.bfdMgr_.watch_all_bfd_sessions(True)
+        #self.watch_all_bfd_sessions(True)
+        self.bfdMgr_.watch_all_bfd_sessions(True)
         self.sess = self.bfdMgr_.session_iter()
-        self.agentMgr_.status_set('dir',str(dir(self.sess)))
+        #self.agentMgr_.status_set('dir',str(dir(self.sess)))
 
     def on_bfd_session_status(self, bfdID, operState):
         """ Callback provided by BfdSessionHandler when a BFD status changes """
