@@ -43,7 +43,6 @@ import syslog
 import sys
 import time
 import re
-import ctypes as ct
 
 __author__ = 'rmartin'
 __version__ = 1.1
@@ -64,7 +63,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.watch_all_bfd_sessions(True)
         syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
 
-    def on_bfd_session_status(self, bfdID, operState):
+    def on_bfd_session_status(self, BfdSessionKey, operState):
         """ Callback provided by BfdSessionHandler when a BFD status changes """
         #Adding in this syslog message for debugging to see if this function ever gets called
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
@@ -82,11 +81,11 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         else:
             bfdState = 'NA'
         lastChangeTime = re.sub( ' +', ' ', time.ctime() )
-        self.tracer.trace5("The state of " + bfdID.to_string() + " is now " + bfdState)
+        self.tracer.trace5("The state of " + BfdSessionKey.to_string() + " is now " + bfdState)
         # Update this agent's status with new statistics:
         self.agentMgr_.status_set("Total BFD changes", str(self.numBFDChanges_))
-        self.agentMgr_.status_set("Last change of " + bfdID.to_string(), bfdState)
-        self.agentMgr_.status_set("Last change time of " + bfdID.to_string(), lastChangeTime)
+        self.agentMgr_.status_set("Last change of " + BfdSessionKey.to_string(), bfdState)
+        self.agentMgr_.status_set("Last change time of " + BfdSessionKey.to_string(), lastChangeTime)
         
 
 if __name__ == '__main__':
