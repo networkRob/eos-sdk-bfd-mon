@@ -45,7 +45,7 @@ import time
 import re
 
 __author__ = 'rmartin'
-__version__ = 1.1
+__version__ = 1.2
 
 
 class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
@@ -57,44 +57,92 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.agentMgr_ = agentMgr
         self.numBFDChanges_ = 0
         self.tracer.trace0("Constructed")
+        self.peers = {}
 
     def on_initialized(self): 
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD Peer/State changes","0")
         self.watch_all_bfd_sessions(True)
-        ip1 = eossdk.IpAddr('10.0.0.2')#Peer IP address for RTR-02
-        intf1 = eossdk.IntfId('Ethernet1')
-        stype = eossdk.BFD_SESSION_TYPE_NORMAL
-        sbfd_key = eossdk.BfdSessionKey(ip1,"default",stype,intf1)
-        self.bfdMgr_.session_set(sbfd_key)
         self.to_syslog('BFD Agent Initialized')
 
     def to_syslog(self,sys_msg):
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%sys_msg)
+    
+    def _create_session(self,r_peer):
+        self.bfdMgr_.session_set(eossdk.BfdSessionKey(eossdk.IpAddr(self.peers[r_peer]['ip']),"default",eossdk.BFD_SESSION_TYPE_NORMAL,eossdk.IntfId(self.peers[r_peer]['intf'])))
+    
+    def _update_status(self):
+        for r1 in self.bfdMgr_.session_iter():
+            bfdPeer = 'Peer'
+            bfdState = self._get_status(self.bfdMgr_.session_status(r1))
+            bfdIP = r1.ip_addr().to_string()
+            for r2 in self.peers.keys():
+                if self.peers[r2]['ip'] == bfdIP:
+                    bfdPeer = r2
+                    bfdCount = self.peers[r2]['stat_chg']
+                    bfdTime = self.peers[r2]['last']
+            self.agentMgr_.status_set("[%s] Status: [%s on %s]"%(bfdPeer,r1.ip_addr().to_string(),r1.intf().to_string()), bfdState)
+            self.agentMgr_.status_set("[%s] Last Status Change: [%s on %s]"%(bfdPeer,r1.ip_addr().to_string(),r1.intf().to_string()),bfdTime)
+            self.agentMgr_.status_set("[%s] Status Change Total: [%s on %s]"%(bfdPeer,r1.ip_addr().to_string(),r1.intf().to_string()),str(bfdCount))
+    
+    def _get_status(self,operState):
+        if operState == eossdk.BFD_SESSION_STATUS_UP:
+            return('UP')
+        elif operState == eossdk.BFD_SESSION_STATUS_DOWN:
+            return('DOWN')
+        elif operState == eossdk.BFD_SESSION_STATUS_INIT:
+            return('INITIALIZING')
+        elif operState == eossdk.BFD_SESSION_STATUS_ADMIN_DOWN:
+            return('ADMIN DOWN')
+        elif operState == eossdk.BFD_SESSION_STATUS_NULL:
+            return('NULL')
+        else:
+            return('NA')
+
+    def on_agent_option(self,optionName, value):
+        #Takes option configurations for BFD Peers to monitor
+        if optionName == 'name':
+            value = value.split(' ')
+            if '-' in value[0]:
+                bf_val = value[0].split('-')
+                #Seeds initial ditionary object in case empty
+                if not self.peers.viewkeys():
+                    self.peers = {bf_val[0]:{'last':'N/A','stat_chg':0}}
+                elif not self.peers.has_key(bf_val[0]):
+                    self.peers[bf_val[0]] = {'last':'N/A','stat_chg':0}
+                if 'ip' in bf_val[1].lower() and re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",value[1]):
+                    if not self.peers[bf_val[0]].viewkeys():
+                        self.peers[bf_val[0]] = {'ip':value[1]}
+                    else:
+                        self.peers[bf_val[0]]['ip'] = value[1]
+                elif 'intf' in bf_val[1].lower():
+                    eth_val = value[1].lower()
+                    if not self.peers[bf_val[0]].viewkeys():
+                        self.peers[bf_val[0]] = {'intf':''}
+                    if re.match(r"Ethernet\d+$",eth_val,re.IGNORECASE):
+                        eth_val = eth_val.capitalize()
+                        self.peers[bf_val[0]]['intf'] = eth_val
+                    elif re.match(r"Eth\d+$",eth_val,re.IGNORECASE):
+                        eth_val = eth_val.lower().replace('eth','Ethernet')
+                        self.peers[bf_val[0]]['intf'] = eth_val
+                if self.peers[bf_val[0]].has_key('ip') and self.peers[bf_val[0]].has_key('intf'):
+                    self._create_session(bf_val[0])
+                self._update_status()
 
     def on_bfd_session_status(self, bfdId, operState):
         """ Callback provided by BfdSessionHandler when a BFD status changes """
-        #Adding in this syslog message for debugging to see if this function ever gets called
         self.numBFDChanges_ += 1
-        if operState == eossdk.BFD_SESSION_STATUS_UP:
-            bfdState = 'UP'
-        elif operState == eossdk.BFD_SESSION_STATUS_DOWN:
-            bfdState = 'DOWN'
-        elif operState == eossdk.BFD_SESSION_STATUS_INIT:
-            bfdState = 'INITIALIZING'
-        elif operState == eossdk.BFD_SESSION_STATUS_ADMIN_DOWN:
-            bfdState = 'ADMIN DOWN'
-        elif operState == eossdk.BFD_SESSION_STATUS_NULL:
-            bfdState = 'NULL'
-        else:
-            bfdState = 'NA'
+        bfdState = self._get_status(operState)
         self.to_syslog("Peer %s on %s is %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string(),bfdState))
-        lastChangeTime = re.sub( ' +', ' ', time.ctime() )
         self.tracer.trace5("The state of " + bfdId.ip_addr().to_string() + " is now " + bfdState)
         # Update this agent's status with new statistics:
         self.agentMgr_.status_set("Total BFD Peer/State changes", str(self.numBFDChanges_))
-        self.agentMgr_.status_set("Last change of Peer %s on %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string()), bfdState)
-        self.agentMgr_.status_set("Last time change for Peer %s on %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string()), lastChangeTime)
+        lastChangeTime = re.sub( ' +', ' ', time.ctime() )
+        for r1 in self.peers.keys():
+            if self.peers[r1]['ip'] == bfdId.ip_addr().to_string():
+                self.peers[r1]['stat_chg'] += 1
+                self.peers[r1]['last'] = lastChangeTime
+        self._update_status()
         
 
 if __name__ == '__main__':
