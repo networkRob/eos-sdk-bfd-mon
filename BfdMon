@@ -69,7 +69,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%sys_msg)
     
     def _create_session(self,r_peer):
-        self.bfdMgr_.session_set(eossdk.BfdSessionKey(eossdk.IpAddr(self.peers[r_peer]['ip']),"default",eossdk.BFD_SESSION_TYPE_NORMAL,eossdk.IntfId(self.peers[r_peer]['intf'])))
+        self.bfdMgr_.session_set(eossdk.BfdSessionKey(eossdk.IpAddr(self.peers[r_peer]['ip']),self.peers[r_peer]['vrf'],eossdk.BFD_SESSION_TYPE_NORMAL,eossdk.IntfId(self.peers[r_peer]['intf'])))
     
     def _update_status(self):
         for r1 in self.bfdMgr_.session_iter():
@@ -103,30 +103,30 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         #Takes option configurations for BFD Peers to monitor
         if optionName == 'name':
             value = value.split(' ')
-            if '-' in value[0]:
-                bf_val = value[0].split('-')
+            if len(value) == 2:
+                #bf_val = value[0].split('-')
                 #Seeds initial ditionary object in case empty
                 if not self.peers.viewkeys():
-                    self.peers = {bf_val[0]:{'last':'N/A','stat_chg':0}}
-                elif not self.peers.has_key(bf_val[0]):
-                    self.peers[bf_val[0]] = {'last':'N/A','stat_chg':0}
-                if 'ip' in bf_val[1].lower() and re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",value[1]):
-                    if not self.peers[bf_val[0]].viewkeys():
-                        self.peers[bf_val[0]] = {'ip':value[1]}
-                    else:
-                        self.peers[bf_val[0]]['ip'] = value[1]
-                elif 'intf' in bf_val[1].lower():
-                    eth_val = value[1].lower()
-                    if not self.peers[bf_val[0]].viewkeys():
-                        self.peers[bf_val[0]] = {'intf':''}
-                    if re.match(r"Ethernet\d+$",eth_val,re.IGNORECASE):
-                        eth_val = eth_val.capitalize()
-                        self.peers[bf_val[0]]['intf'] = eth_val
-                    elif re.match(r"Eth\d+$",eth_val,re.IGNORECASE):
-                        eth_val = eth_val.lower().replace('eth','Ethernet')
-                        self.peers[bf_val[0]]['intf'] = eth_val
-                if self.peers[bf_val[0]].has_key('ip') and self.peers[bf_val[0]].has_key('intf'):
-                    self._create_session(bf_val[0])
+                    self.peers = {value[0]:{'last':'N/A','stat_chg':0}}
+                elif not self.peers.has_key(value[0]):
+                    self.peers[value[0]] = {'last':'N/A','stat_chg':0}
+                o_value = value[1].split(',')
+                if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",o_value[0]):
+                    self.peers[value[0]]['ip'] = o_value[0]
+                if re.match(r"Ethernet\d+$",o_value[1],re.IGNORECASE):
+                    eth_val = o_value[1].capitalize()
+                    self.peers[value[0]]['intf'] = eth_val
+                elif re.match(r"Eth\d+$",o_value[1],re.IGNORECASE):
+                    eth_val = o_value[1].lower().replace('eth','Ethernet')
+                    self.peers[value[0]]['intf'] = eth_val
+                if len(o_value) == 3:
+                    b_vrf = o_value[2]
+                else:
+                    b_vrf = 'default'
+                self.peers[value[0]]['vrf'] = b_vrf
+                self.to_syslog(str(self.peers))
+                if self.peers[value[0]].has_key('ip') and self.peers[value[0]].has_key('intf') and self.peers[value[0]].has_key('vrf'):
+                    self._create_session(value[0])
                 self._update_status()
 
     def on_bfd_session_status(self, bfdId, operState):
