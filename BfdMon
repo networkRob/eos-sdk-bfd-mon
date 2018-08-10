@@ -47,9 +47,8 @@ import re
 __author__ = 'rmartin'
 __version__ = 1.1
 
-bfd_peers = []
 
-class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdSessionIter):
+class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
     def __init__(self, bfdMgr, agentMgr):
         eossdk.AgentHandler.__init__(self,agentMgr)
         eossdk.BfdSessionHandler.__init__(self,bfdMgr)
