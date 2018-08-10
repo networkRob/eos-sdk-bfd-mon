@@ -1,5 +1,5 @@
 ### EOS SDK BFD Monitor
-#### verson 1.3
+#### verson 1.4
 This will create an EOS agent to monitor BFD status changes.  As of this moment, when a BFD session status changes, it will create a switch SYSLOG message.  This can be modified further to create a SNMP Trap message to a remote syslog server.
 
 #### Setup
