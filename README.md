@@ -7,7 +7,7 @@ This will create an EOS agent to monitor BFD status changes.
 3. Verify BFD is running on the switch and remote switch.  You can verify with the following EOS command: `show bfd neighbors`
 4. In EOS config mode perform the following steps:
 ```config
-daemon SDKBFD
+daemon BfdMon
 exec /mnt/flash/BfdMon
 no shut
 ```
