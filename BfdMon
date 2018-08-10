@@ -90,7 +90,7 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
             bfdState = 'NA'
         self.to_syslog("Peer %s on %s is %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string(),bfdState))
         lastChangeTime = re.sub( ' +', ' ', time.ctime() )
-        self.tracer.trace5("The state of " + bfdId.to_string() + " is now " + bfdState)
+        self.tracer.trace5("The state of " + bfdId.ip_addr().to_string() + " is now " + bfdState)
         # Update this agent's status with new statistics:
         self.agentMgr_.status_set("Total BFD Peer/State changes", str(self.numBFDChanges_))
         self.agentMgr_.status_set("Last change of Peer %s on %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string()), bfdState)
