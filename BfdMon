@@ -47,7 +47,9 @@ import re
 __author__ = 'rmartin'
 __version__ = 1.1
 
-class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
+bfd_peers = []
+
+class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler,eossdk.BfdSessionIter):
     def __init__(self, bfdMgr, agentMgr):
         eossdk.AgentHandler.__init__(self,agentMgr)
         eossdk.BfdSessionHandler.__init__(self,bfdMgr)
@@ -59,33 +61,41 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
 
     def on_initialized(self): 
         self.tracer.trace0("We are initialized!")
-        self.agentMgr_.status_set("Total BFD changes","0")
+        self.agentMgr_.status_set("Total BFD Peer/State changes","0")
         self.watch_all_bfd_sessions(True)
-        syslog.syslog("%%myBFD-6-LOG: Status: %s"%' Initialized')
+        ip1 = eossdk.IpAddr('10.0.0.2')#Peer IP address for RTR-02
+        intf1 = eossdk.IntfId('Ethernet1')
+        stype = eossdk.BFD_SESSION_TYPE_NORMAL
+        sbfd_key = eossdk.BfdSessionKey(ip1,"default",stype,intf1)
+        self.bfdMgr_.session_set(sbfd_key)
+        self.to_syslog('BFD Agent Initialized')
 
-    def on_bfd_session_status(self, BfdSessionKey, operState):
+    def to_syslog(self,sys_msg):
+        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%sys_msg)
+
+    def on_bfd_session_status(self, bfdId, operState):
         """ Callback provided by BfdSessionHandler when a BFD status changes """
         #Adding in this syslog message for debugging to see if this function ever gets called
-        syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%'mBFD Agent Status Change')
         self.numBFDChanges_ += 1
         if operState == eossdk.BFD_SESSION_STATUS_UP:
             bfdState = 'UP'
         elif operState == eossdk.BFD_SESSION_STATUS_DOWN:
             bfdState = 'DOWN'
         elif operState == eossdk.BFD_SESSION_STATUS_INIT:
-            bfdState = 'INIT'
+            bfdState = 'INITIALIZING'
         elif operState == eossdk.BFD_SESSION_STATUS_ADMIN_DOWN:
             bfdState = 'ADMIN DOWN'
         elif operState == eossdk.BFD_SESSION_STATUS_NULL:
             bfdState = 'NULL'
         else:
             bfdState = 'NA'
+        self.to_syslog("Peer %s on %s is %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string(),bfdState))
         lastChangeTime = re.sub( ' +', ' ', time.ctime() )
-        self.tracer.trace5("The state of " + BfdSessionKey.to_string() + " is now " + bfdState)
+        self.tracer.trace5("The state of " + bfdId.to_string() + " is now " + bfdState)
         # Update this agent's status with new statistics:
-        self.agentMgr_.status_set("Total BFD changes", str(self.numBFDChanges_))
-        self.agentMgr_.status_set("Last change of " + BfdSessionKey.to_string(), bfdState)
-        self.agentMgr_.status_set("Last change time of " + BfdSessionKey.to_string(), lastChangeTime)
+        self.agentMgr_.status_set("Total BFD Peer/State changes", str(self.numBFDChanges_))
+        self.agentMgr_.status_set("Last change of Peer %s on %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string()), bfdState)
+        self.agentMgr_.status_set("Last time change for Peer %s on %s"%(bfdId.ip_addr().to_string(),bfdId.intf().to_string()), lastChangeTime)
         
 
 if __name__ == '__main__':
