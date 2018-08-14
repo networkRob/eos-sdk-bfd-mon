@@ -55,9 +55,9 @@ class my_bfd_mon : public eos::agent_handler,
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
-            if (std::regex_match(o_value[0],IPmatch,IPre)){
+            if (std::regex_match(o_value[0],IPmatch,IPre))
                 oIP = o_value[0];
-            }
+            
             if (std::regex_match(o_value[1],Intfmatch,Intfre)){
                 oIntf = o_value[1];
             }
@@ -84,12 +84,12 @@ class my_bfd_mon : public eos::agent_handler,
             bfd_session_mgr_->session_set(bfd_key);
             
         }
-        void on_bfd_session_status(eos::bfd_session_key_t const& bfdKey, eos::bfd_session_status_t operState){
+        void on_bfd_session_status(eos::bfd_session_key_t const &bfdKey, eos::bfd_session_status_t operState){
             bfdChanges++;
             std::string bfdState = _get_status(operState);
             time_t now = time(0);
             std::string l_time_change = ctime(&now);
-            t.trace5("The State of " << bfdKey.ip_addr.to_string << " is now " << bfdState);
+            t.trace5("The State of " <<  bfdKey.ip_addr.to_string << " is now " << bfdState);
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
             status_update("Last change of Peer " << bfdKey.ip_addr.to_string << " on " << bfdKey.intf.to_string,bfdState);
             status_update("Last time change for Peer " << bfdKey.ip_addr.to_string << " on " << bfdKey.intf.to_string,l_time_change); 
