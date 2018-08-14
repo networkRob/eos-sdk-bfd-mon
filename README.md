@@ -1,4 +1,11 @@
 ### EOS SDK BFD Monitor
+There are 2 versions of this sdk agent.  One written in Python, and the other in c++.  Below are their current status:
+1. Python: BfdMon [stable]
+2. C++: BfdMon.cpp [not full-featured/WIP]
+    Missing Features:
+    - Ability to write status changes to syslog
+    - Regex to verify IP addresses and interface names
+    
 #### verson 1.4
 This will create an EOS agent to monitor BFD status changes.  As of this moment, when a BFD session status changes, it will create a switch SYSLOG message.  This can be modified further to create a SNMP Trap message to a remote syslog server.
 
