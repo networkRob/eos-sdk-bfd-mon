@@ -1,7 +1,10 @@
 // Copyright (c) 2018 Arista Networks, Inc.  All rights reserved.
 // Arista Networks, Inc. Confidential and Proprietary.
 // Written by: Rob Martin 2018
-// This has been tested with EOS 4.20.5F
+//
+// =====================================
+// This is not ready, it is still buggy
+// =====================================
 
 #include <eos/agent.h>
 #include <eos/sdk.h>
@@ -10,7 +13,7 @@
 #include <ctime>
 #include <vector>
 #include <sstream>
-#include <regex>
+//#include <regex>
 
 static const std::string AGENT_NAME = "BfdMon";
 
