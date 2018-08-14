@@ -64,7 +64,7 @@ class my_bfd_mon : public eos::agent_handler,
             oIntf = o_value[1];
             int resIP = _validate_IP(o_value[0]);
             if (resIP == 1) {
-                oIP = o_value[1];
+                oIP = o_value[0];
             }
             else {
                 status_update("Incorrect IP Value for "+optionName,o_value[0]);
