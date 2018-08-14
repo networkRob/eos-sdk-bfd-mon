@@ -55,14 +55,23 @@ class my_bfd_mon : public eos::agent_handler,
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
-            if (std::regex_match(o_value[0],IPmatch,IPre))
+            oIP = o_value[0];
+            /*if (std::regex_match(o_value[0],IPmatch,IPre))
                 oIP = o_value[0];
-            
-            if (std::regex_match(o_value[1],Intfmatch,Intfre)){
-                oIntf = o_value[1];
+            */
+           try {
+               if (std::regex_match(o_value[1],Intfmatch,Intfre)){
+                    oIntf = o_value[1];
+                }
+                else if(std::regex_match(o_value[1],Intfmatch,Intfre2)){
+                    oIntf = _replace_string(o_value[1],"eth","Ethernet");
+                }
             }
-            else if(std::regex_match(o_value[1],Intfmatch,Intfre2)){
-                oIntf = _replace_string(o_value[1],"eth","Ethernet");
+            catch (const std::regex_error& e) {
+                std::cout << "regex_error caught: " << e.what() << '\n';
+                if (e.code() == std::regex_constants::error_brack) {
+                    std::cout << "The code was error_brack\n";
+                }
             }
             eos::ip_addr_t ip1(oIP);
             eos::intf_id_t intf1(oIntf);
