@@ -47,11 +47,12 @@ class my_bfd_mon : public eos::agent_handler,
             std::string vrf1;
             std::string oIP;
             std::string oIntf;
-            std::regex IPre("(\\d{1,3}(\\.\\d{1,3}){3})");
+            /*std::regex IPre("(\\d{1,3}(\\.\\d{1,3}){3})");
             std::smatch IPmatch;
             std::regex Intfre("(Ethernet)(.*)\\d+",std::regex_constants::icase);
             std::regex Intfre2("(Eth)(.*)\\d+",std::regex_constants::icase);
             std::smatch Intfmatch;
+            */
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
