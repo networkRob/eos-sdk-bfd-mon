@@ -89,10 +89,10 @@ class my_bfd_mon : public eos::agent_handler,
             std::string bfdState = _get_status(operState);
             time_t now = time(0);
             std::string l_time_change = ctime(&now);
-            t.trace5("The State of " <<  bfdKey.ip_addr.to_string << " is now " << bfdState);
+            t.trace5("The State of " <<  *bfdKey.ip_addr.to_string << " is now " << bfdState);
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
-            status_update("Last change of Peer " << bfdKey.ip_addr.to_string << " on " << bfdKey.intf.to_string,bfdState);
-            status_update("Last time change for Peer " << bfdKey.ip_addr.to_string << " on " << bfdKey.intf.to_string,l_time_change); 
+            status_update("Last change of Peer " << *bfdKey.ip_addr.to_string << " on " << *bfdKey.intf.to_string,bfdState);
+            status_update("Last time change for Peer " << *bfdKey.ip_addr.to_string << " on " << *bfdKey.intf.to_string,l_time_change); 
         }
     private:
         int bfdChanges = 0; //# of BFD Peer/State changes
@@ -134,7 +134,7 @@ class my_bfd_mon : public eos::agent_handler,
         void _update_status(){
             for (auto b_sess = bfd_session_mgr_->session_iter();b_sess;b_sess++) {
                 std::string bfdState = _get_status(bfd_session_mgr_->session_status(*b_sess));
-                std::string bfdIP = b_sess->ip_addr.to_string();
+                std::string bfdIP = *b_sess->ip_addr.to_string();
                 std::string bfdPeer;
                 std::string bfdTime;
                 int bfdCount;
@@ -145,9 +145,9 @@ class my_bfd_mon : public eos::agent_handler,
                         bfdTime = peer_list[i].last;
                     }
                 }
-                status_update("[" + bfdPeer + "] Status: [" + b_sess->ip_addr.to_string() +" on " + b_sess->intf().to_string() + "]",bfdState);
-                status_update("[" + bfdPeer + "] Last Status Change: [" + b_sess->ip_addr.to_string() +" on " + b_sess->intf().to_string() + "]",bfdTime);
-                status_update("[" + bfdPeer + "] Status Change Total: [" + b_sess->ip_addr.to_string() +" on " + b_sess->intf().to_string() + "]",bfdCount);
+                status_update("[" + bfdPeer + "] Status: [" + *b_sess->ip_addr.to_string() +" on " + b_sess->intf().to_string() + "]",bfdState);
+                status_update("[" + bfdPeer + "] Last Status Change: [" + *b_sess->ip_addr.to_string() +" on " + b_sess->intf().to_string() + "]",bfdTime);
+                status_update("[" + bfdPeer + "] Status Change Total: [" + *b_sess->ip_addr.to_string() +" on " + b_sess->intf().to_string() + "]",std::to_string(bfdCount));
             }
         }
         std::string  _get_status(eos::bfd_session_status_t operState) {
