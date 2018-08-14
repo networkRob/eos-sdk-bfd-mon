@@ -89,7 +89,8 @@ class my_bfd_mon : public eos::agent_handler,
             std::string bfdState = _get_status(operState);
             time_t now = time(0);
             std::string l_time_change = ctime(&now);
-            t.trace5("The State of " +  bfdKey.ip_addr().to_string() + " is now " + bfdState);
+            std::string t_msg = "The State of " +  bfdKey.ip_addr().to_string() + " is now " + bfdState;
+            t.trace5(t_msg.c_str());
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
             status_update("Last change of Peer " + bfdKey.ip_addr().to_string() + " on " + bfdKey.intf().to_string(),bfdState);
             status_update("Last time change for Peer " +bfdKey.ip_addr().to_string() + " on " + bfdKey.intf().to_string(),l_time_change); 
