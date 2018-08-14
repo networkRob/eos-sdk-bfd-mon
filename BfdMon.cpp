@@ -13,6 +13,7 @@
 #include <ctime>
 #include <vector>
 #include <sstream>
+#include <arpa/inet.h>
 //#include <regex>
 
 static const std::string AGENT_NAME = "BfdMon";
@@ -59,8 +60,16 @@ class my_bfd_mon : public eos::agent_handler,
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
-            oIP = o_value[0];
+            //oIP = o_value[0];
             oIntf = o_value[1];
+            int resIP = _validate_IP(o_value[0]);
+            if (resIP == 1) {
+                oIP = o_value[1];
+            }
+            else {
+                status_update("Incorrect IP Value for "+optionName,o_value[0]);
+                oIP = "";
+            }
             /*if (std::regex_match(o_value[0],IPmatch,IPre))
                 oIP = o_value[0];
             
@@ -70,24 +79,27 @@ class my_bfd_mon : public eos::agent_handler,
             else if(std::regex_match(o_value[1],Intfmatch,Intfre2)){
                 oIntf = _replace_string(o_value[1],"eth","Ethernet");
             }*/
-            eos::ip_addr_t ip1(oIP);
-            eos::intf_id_t intf1(oIntf);
-            tmpPeer.name = optionName;
-            tmpPeer.ip = oIP;
-            tmpPeer.intf = oIntf;
-            tmpPeer.stat_chg = 0;
-            tmpPeer.last = "N/A";
-            if (o_value.size() == 3){
-                vrf1 = o_value[2];
-                tmpPeer.vrf = o_value[2];
+            if (oIP != "") {
+                eos::ip_addr_t ip1(oIP);
+                eos::intf_id_t intf1(oIntf);
+                tmpPeer.name = optionName;
+                tmpPeer.ip = oIP;
+                tmpPeer.intf = oIntf;
+                tmpPeer.stat_chg = 0;
+                tmpPeer.last = "N/A";
+                if (o_value.size() == 3){
+                    vrf1 = o_value[2];
+                    tmpPeer.vrf = o_value[2];
+                }
+                else {
+                    vrf1 = "default";
+                    tmpPeer.vrf = "default";
+                }
+                peer_list_count++;
+                auto bfd_key = eos::bfd_session_key_t(ip1,vrf1,eos::BFD_SESSION_TYPE_NORMAL,intf1);
+                bfd_session_mgr_->session_set(bfd_key);
             }
-            else {
-                vrf1 = "default";
-                tmpPeer.vrf = "default";
-            }
-            peer_list_count++;
-            auto bfd_key = eos::bfd_session_key_t(ip1,vrf1,eos::BFD_SESSION_TYPE_NORMAL,intf1);
-            bfd_session_mgr_->session_set(bfd_key);
+            
             
         }
         void on_bfd_session_status(eos::bfd_session_key_t const& bfdKey, eos::bfd_session_status_t operState){
@@ -116,6 +128,13 @@ class my_bfd_mon : public eos::agent_handler,
         //Basic function to split ',' separated string into an array
         void _to_syslog(std::string sys_msg) {
             //Add in code to write to switch syslog
+        }
+        int _validate_IP(std::string uIP) {
+            struct sockaddr_in sa;
+            char str[INET_ADDRSTRLEN];
+            int result = inet_pton(AF_INET,uIP.c_str(),&(sa.sin_addr));
+            //int result = inet_ntop(AF_INET,&(sa.sin_addr),str,INET_ADDRSTRLEN);
+            return result;
         }
         std::string _replace_string(std::string oldString,std::string patt,std::string nValue){
             int posi = 0;
