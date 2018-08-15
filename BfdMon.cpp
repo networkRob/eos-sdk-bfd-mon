@@ -2,9 +2,6 @@
 // Arista Networks, Inc. Confidential and Proprietary.
 // Written by: Rob Martin 2018
 //
-// =====================================
-// This is not ready, it is still buggy
-// =====================================
 //
 // author: rmartin
 // version: 2.0
