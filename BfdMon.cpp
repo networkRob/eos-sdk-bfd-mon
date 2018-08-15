@@ -129,7 +129,7 @@ class my_bfd_mon : public eos::agent_handler,
             for (int i = 0; i < peer_list_count; i++) {
                 if (peer_list[i].ip == bfIP and peer_list[i].intf == bfdKey.intf().to_string()) {
                     peer_list[i].stat_chg++;
-                    peer_list[1].last = l_time_change;
+                    peer_list[i].last = l_time_change;
                 }
             }
             _update_status();
