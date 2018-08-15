@@ -1,11 +1,26 @@
-### EOS SDK BFD Monitor
+# EOS SDK BFD Monitor
+There are 2 versions of this sdk agent.  One written in Python, and the other in c++.  Below are their current status:
+1. Python: BfdMon [stable]
+2. C++: BfdMon.cpp [stable]
+
+## Python Version   
 #### version 1.5
 Corrected an issue when the agent initialized with pre-configured option/values in the config file, it wouldn't load those configs.  Also added logic to notify on the `show daemon BfdMon` command that an incorrect IP address or Intf was entered.
 
 #### verson 1.4
 This will create an EOS agent to monitor BFD status changes.  As of this moment, when a BFD session status changes, it will create a switch SYSLOG message.  This can be modified further to create a SNMP Trap message to a remote syslog server.
 
-#### Setup
+
+## C++ Version
+#### version 2.0
+This release adds a C++ version of the agent.
+
+### C++ Compiling
+In order to use `BfdMon.cpp`, follow the instructions on the [Arista's EOS SDK GitHub](https://github.com/aristanetworks/EosSdk/wiki).
+This link will help with compiling the `BfdMon.cpp` file to be used as an agent.
+
+
+## Switch Setup (Python & C++)
 1. Copy `BfdMon`, `BfdMon.mp` and `profileBFD` to `/mnt/flash/` on the switch
 2. Run the following command on the switch: 
 ```
