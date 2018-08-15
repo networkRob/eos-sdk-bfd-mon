@@ -37,6 +37,11 @@ class my_bfd_mon : public eos::agent_handler,
             t.trace0("Initialized");
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
             watch_all_bfd_sessions(true);
+            for (eos::agent_option_iter_t opt_obj = agent_mgr->agent_option_iter();opt_obj;opt_obj++) {
+                std::string opt_name = opt_obj->c_str();
+                std::string opt_value = agent_mgr->agent_option(opt_name);
+                on_agent_option(opt_name,opt_value);
+            }
             // Add call to function to print ot syslog
             /*
             eos::ip_addr_t ip1("10.0.0.2");
@@ -124,6 +129,7 @@ class my_bfd_mon : public eos::agent_handler,
             for (int i = 0; i < peer_list_count; i++) {
                 if (peer_list[i].ip == bfIP and peer_list[i].intf == bfdKey.intf().to_string()) {
                     peer_list[i].stat_chg++;
+                    peer_list[1].last = l_time_change;
                 }
             }
             _update_status();
