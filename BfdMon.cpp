@@ -99,16 +99,9 @@ class my_bfd_mon : public eos::agent_handler,
                 bfd_session_mgr_->session_set(bfd_key);
                 for (int i = peer_error_count - 1; i >= 0;i--) {
                     if (peer_error[i][0] == optionName) {
-                        if (peer_error[i][1] == "ip") {
-                            peer_error.erase(peer_error.begin()+i);
-                            peer_error_count--;
-                            status_delete(optionName);
-                        }
-                        else if (peer_error[i][1] == "intf") {
-                            peer_error.erase(peer_error.begin()+i);
-                            peer_error_count--;
-                            status_delete(optionName);
-                        }
+                        status_delete(peer_error[i]);
+                        peer_error.erase(peer_error.begin()+i);
+                        peer_error_count--;
                         
                     }
                 }
@@ -236,8 +229,14 @@ class my_bfd_mon : public eos::agent_handler,
         }
 
         // Function to delete a status value
-        void status_delete(std::string s_name) {
-            agent_mgr->status_del("Incorrect IP Value for " + s_name);
+        void status_delete(std::vector<std::string> s_value) {
+            if (s_value[1] == "ip") {
+                agent_mgr->status_del("Incorrect IP Value for " + s_value[0]);
+            }
+            else if (s_value[1] == "intf") {
+                agent_mgr->status_del("Incorrect Interface for " + s_value[0]);
+            }
+            
         }
 
         // Function to write string/value pair to agent status
