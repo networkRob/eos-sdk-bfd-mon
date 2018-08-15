@@ -97,15 +97,8 @@ class my_bfd_mon : public eos::agent_handler,
                 peer_list[peer_list_count++] = tmpPeer;
                 auto bfd_key = eos::bfd_session_key_t(ip1,vrf1,eos::BFD_SESSION_TYPE_NORMAL,intf1);
                 bfd_session_mgr_->session_set(bfd_key);
-                for (int i = peer_error_count - 1; i >= 0;i--) {
-                    _to_syslog(peer_error[i][0]+peer_error[i][1]);
-                    if (peer_error[i][0] == optionName) {
-                        status_delete(peer_error[i]);
-                        peer_error.erase(peer_error.begin()+i);
-                        peer_error_count--;
-                        
-                    }
-                }
+                _check_peer_error(optionName,"ip");
+                _check_peer_error(optionName,"intf");
             }
             else {
                 if (oIP == "") {
@@ -115,12 +108,18 @@ class my_bfd_mon : public eos::agent_handler,
                     peer_error.push_back(tmp);
                     peer_error_count++;
                 }
+                else if (oIP != "") {
+                    _check_peer_error(optionName,"ip");
+                }
                 if (oIntf == "") {
                     std::vector<std::string> tmp;
                     tmp.push_back(optionName);
                     tmp.push_back("intf");
                     peer_error.push_back(tmp);
                     peer_error_count++;
+                }
+                else if (oIntf != "") {
+                    _check_peer_error(optionName,"intf");
                 }
             }
             _update_status();
@@ -161,6 +160,19 @@ class my_bfd_mon : public eos::agent_handler,
 
         peers peer_list[64]; //Tracks all Peer structures
         int peer_list_count = 0; //total count for all Peer structures
+
+        // Function to iterate through peer_error list and remove any corrected option/values
+        void _check_peer_error(std::string optName,std::string optType) {
+            for (int i = peer_error_count - 1; i >= 0;i--) {
+                    if (peer_error[i][0] == optName) {
+                        if (peer_error[i][1] == optType) {
+                            status_delete(peer_error[i]);
+                            peer_error.erase(peer_error.begin()+i);
+                            peer_error_count--;
+                        }
+                    }
+                }
+        }
 
         // Function that will write string message to syslog
         void _to_syslog(std::string sys_msg) {
