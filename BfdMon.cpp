@@ -99,9 +99,17 @@ class my_bfd_mon : public eos::agent_handler,
                 bfd_session_mgr_->session_set(bfd_key);
                 for (int i = 0; i<peer_error_count;i++) {
                     if (peer_error[i][0] == optionName) {
-                        peer_error.erase(peer_error.begin()+i);
-                        peer_error_count--;
-                        status_delete(optionName);
+                        if (peer_error[i][1] == "ip") {
+                            peer_error.erase(peer_error.begin()+i);
+                            peer_error_count--;
+                            status_delete(optionName);
+                        }
+                        else if (peer_error[i][1] == "intf") {
+                            peer_error.erase(peer_error.begin()+i);
+                            peer_error_count--;
+                            status_delete(optionName);
+                        }
+                        
                     }
                 }
             }
