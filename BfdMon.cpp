@@ -44,15 +44,13 @@ class my_bfd_mon : public eos::agent_handler,
             eos::bfd_session_key_t(ip1,"default",eos::BFD_SESSION_TYPE_NORMAL,intf1);*/
             //auto bfd_mgr_ = get_bfd_session_mgr();
             
-            
         }
         void on_agent_option(std::string const & optionName, std::string const & value) {
             std::vector<std::string> o_value;
             std::string vrf1;
             std::string oIP;
             std::string oIntf;
-            /*std::regex IPre("(\\d{1,3}(\\.\\d{1,3}){3})");
-            std::smatch IPmatch;
+            /*
             std::regex Intfre("(Ethernet)(.*)\\d+",std::regex_constants::icase);
             std::regex Intfre2("(Eth)(.*)\\d+",std::regex_constants::icase);
             std::smatch Intfmatch;
@@ -60,7 +58,6 @@ class my_bfd_mon : public eos::agent_handler,
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
-            //oIP = o_value[0];
             oIntf = o_value[1];
             int resIP = _validate_IP(o_value[0]);
             if (resIP == 1) {
@@ -70,9 +67,7 @@ class my_bfd_mon : public eos::agent_handler,
                 status_update("Incorrect IP Value for "+optionName,o_value[0]);
                 oIP = "";
             }
-            /*if (std::regex_match(o_value[0],IPmatch,IPre))
-                oIP = o_value[0];
-            
+            /*
             if (std::regex_match(o_value[1],Intfmatch,Intfre)){
                 oIntf = o_value[1];
             }
@@ -95,26 +90,42 @@ class my_bfd_mon : public eos::agent_handler,
                     vrf1 = "default";
                     tmpPeer.vrf = "default";
                 }
-                peer_list_count++;
+                peer_list[peer_list_count++] = tmpPeer;
                 auto bfd_key = eos::bfd_session_key_t(ip1,vrf1,eos::BFD_SESSION_TYPE_NORMAL,intf1);
                 bfd_session_mgr_->session_set(bfd_key);
+                for (int i = 0; i<peer_error_count;i++) {
+                    if (peer_error[i] == optionName) {
+                        peer_error.erase(peer_error.begin()+i);
+                        peer_error_count--;
+                        status_delete(optionName);
+                    }
+                }
             }
+            else {
+                peer_error.push_back(optionName);
+                peer_error_count++;
+            }
+            _update_status();
             
             
         }
         void on_bfd_session_status(eos::bfd_session_key_t const& bfdKey, eos::bfd_session_status_t operState){
             bfdChanges++;
             std::string bfdState = _get_status(operState);
+            //
+            //Add in calls to syslog
+            //
             time_t now = time(0);
             std::string l_time_change = ctime(&now);
             std::string t_msg = "The State of " +  bfdKey.ip_addr().to_string() + " is now " + bfdState;
             t.trace5(t_msg.c_str());
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
-            status_update("Last change of Peer " + bfdKey.ip_addr().to_string() + " on " + bfdKey.intf().to_string(),bfdState);
-            status_update("Last time change for Peer " +bfdKey.ip_addr().to_string() + " on " + bfdKey.intf().to_string(),l_time_change); 
+            _update_status();
         }
     private:
         int bfdChanges = 0; //# of BFD Peer/State changes
+        std::vector<std::string> peer_error; //array to keep track of bad option values
+        int peer_error_count = 0;
         struct peers {
             std::string name;
             std::string ip;
@@ -153,6 +164,9 @@ class my_bfd_mon : public eos::agent_handler,
                 mvalue.push_back(token);
             }
             return mvalue;
+        }
+        void status_delete(std::string s_name) {
+            agent_mgr->status_del("Incorrect IP Value for " + s_name);
         }
         void status_update(std::string s_name,std::string s_value) {
             agent_mgr->status_set(s_name,s_value);
