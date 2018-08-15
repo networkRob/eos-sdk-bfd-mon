@@ -5,11 +5,14 @@ Corrected an issue when the agent initialized with pre-configured option/values 
 
 =======
 There are 2 versions of this sdk agent.  One written in Python, and the other in c++.  Below are their current status:
-1. Python: BfdMon [stable]
+1. Python: BfdMon [Issue found]
+    Issue:
+    - When agent restarts or system reboots, agent doesn't grab pre-configured option/value data
 2. C++: BfdMon.cpp [not full-featured/WIP]
     Missing Features:
     - Ability to write status changes to syslog
-    - Regex to verify IP addresses and interface names
+    - Regex to verify interface names
+    - When agent restarts `shutdown/no shutdown` reset status stats
     
 >>>>>>> updated readme for c++
 #### verson 1.4
