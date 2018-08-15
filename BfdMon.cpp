@@ -5,6 +5,9 @@
 // =====================================
 // This is not ready, it is still buggy
 // =====================================
+//
+// author: rmartin
+// version: 2.0
 
 #include <eos/agent.h>
 #include <eos/sdk.h>
@@ -14,7 +17,7 @@
 #include <vector>
 #include <sstream>
 #include <arpa/inet.h>
-//#include <regex>
+#include <syslog.h>
 
 static const std::string AGENT_NAME = "BfdMon";
 
@@ -33,6 +36,8 @@ class my_bfd_mon : public eos::agent_handler,
               t(AGENT_NAME.c_str()) {
             t.trace0("Constructed");
               }
+
+        // SDK Function that is called when the agent initializes
         void on_initialized() {
             t.trace0("Initialized");
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
@@ -42,24 +47,15 @@ class my_bfd_mon : public eos::agent_handler,
                 std::string opt_value = agent_mgr->agent_option(opt_name);
                 on_agent_option(opt_name,opt_value);
             }
-            // Add call to function to print ot syslog
-            /*
-            eos::ip_addr_t ip1("10.0.0.2");
-            eos::intf_id_t intf1("Ethernet1");
-            eos::bfd_session_key_t(ip1,"default",eos::BFD_SESSION_TYPE_NORMAL,intf1);*/
-            //auto bfd_mgr_ = get_bfd_session_mgr();
-            
+            _to_syslog("BFD Agent Initialized");
         }
+
+        // SDK Function that is called when a new agent option is specified
         void on_agent_option(std::string const & optionName, std::string const & value) {
             std::vector<std::string> o_value;
             std::string vrf1;
             std::string oIP;
             std::string oIntf;
-            /*
-            std::regex Intfre("(Ethernet)(.*)\\d+",std::regex_constants::icase);
-            std::regex Intfre2("(Eth)(.*)\\d+",std::regex_constants::icase);
-            std::smatch Intfmatch;
-            */
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
@@ -72,13 +68,6 @@ class my_bfd_mon : public eos::agent_handler,
                 status_update("Incorrect IP Value for "+optionName,o_value[0]);
                 oIP = "";
             }
-            /*
-            if (std::regex_match(o_value[1],Intfmatch,Intfre)){
-                oIntf = o_value[1];
-            }
-            else if(std::regex_match(o_value[1],Intfmatch,Intfre2)){
-                oIntf = _replace_string(o_value[1],"eth","Ethernet");
-            }*/
             if (oIP != "") {
                 eos::ip_addr_t ip1(oIP);
                 eos::intf_id_t intf1(oIntf);
@@ -114,20 +103,21 @@ class my_bfd_mon : public eos::agent_handler,
             
             
         }
+
+        // SDK Function that is called when a registered BFD session changes status
         void on_bfd_session_status(eos::bfd_session_key_t const& bfdKey, eos::bfd_session_status_t operState){
             bfdChanges++;
             std::string bfdState = _get_status(operState);
-            //
-            //Add in calls to syslog
-            //
             time_t now = time(0);
             std::string l_time_change = ctime(&now);
             std::string bfIP = bfdKey.ip_addr().to_string();
+            std::string bfINTF = bfdKey.intf().to_string();
             std::string t_msg = "The State of " +  bfIP + " is now " + bfdState;
             t.trace5(t_msg.c_str());
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
+            _to_syslog("Peer " + bfIP + " on " +  bfINTF + " is " + bfdState);
             for (int i = 0; i < peer_list_count; i++) {
-                if (peer_list[i].ip == bfIP and peer_list[i].intf == bfdKey.intf().to_string()) {
+                if (peer_list[i].ip == bfIP and peer_list[i].intf == bfINTF) {
                     peer_list[i].stat_chg++;
                     peer_list[i].last = l_time_change;
                 }
@@ -146,19 +136,25 @@ class my_bfd_mon : public eos::agent_handler,
             std::string last;
             int stat_chg;
         };
+
         peers peer_list[64]; //Tracks all Peer structures
         int peer_list_count = 0; //total count for all Peer structures
-        //Basic function to split ',' separated string into an array
+
+        // Function that will write string message to syslog
         void _to_syslog(std::string sys_msg) {
-            //Add in code to write to switch syslog
+            sys_msg = "%%myBFD-6-LOG: BFD State Change: " + sys_msg;
+            syslog(LOG_WARNING,sys_msg.c_str());;
         }
+
+        // Function to verify string is a valid IP address
         int _validate_IP(std::string uIP) {
             struct sockaddr_in sa;
             char str[INET_ADDRSTRLEN];
             int result = inet_pton(AF_INET,uIP.c_str(),&(sa.sin_addr));
-            //int result = inet_ntop(AF_INET,&(sa.sin_addr),str,INET_ADDRSTRLEN);
             return result;
         }
+
+        // Function to replace substring within a string
         std::string _replace_string(std::string oldString,std::string patt,std::string nValue){
             int posi = 0;
             std::string newString;
@@ -167,6 +163,8 @@ class my_bfd_mon : public eos::agent_handler,
             newString += oldString.substr(posi+patt.size(),std::string::npos);
             return newString;
         }
+
+        // Function to split a csv string and return an array
         std::vector<std::string> split(std::string mstring) {
             std::vector<std::string> mvalue;
             std::string token;
@@ -177,12 +175,18 @@ class my_bfd_mon : public eos::agent_handler,
             }
             return mvalue;
         }
+
+        // Function to delete a status value
         void status_delete(std::string s_name) {
             agent_mgr->status_del("Incorrect IP Value for " + s_name);
         }
+
+        // Function to write string/value pair to agent status
         void status_update(std::string s_name,std::string s_value) {
             agent_mgr->status_set(s_name,s_value);
         }
+
+        // Function to update all BFD session status' on the show daemon BfdMon section
         void _update_status(){
             for (auto b_sess = bfd_session_mgr_->session_iter();b_sess;b_sess++) {
                 std::string bfdState = _get_status(bfd_session_mgr_->session_status(*b_sess));
@@ -202,6 +206,8 @@ class my_bfd_mon : public eos::agent_handler,
                 status_update("[" + bfdPeer + "] Status Change Total: [" + b_sess->ip_addr().to_string() + " on " + b_sess->intf().to_string() + "]",std::to_string(bfdCount));
             }
         }
+
+        // Function to return friendly status for BFD session
         std::string  _get_status(eos::bfd_session_status_t operState) {
             switch (operState) {
                 case eos::BFD_SESSION_STATUS_UP:
@@ -221,6 +227,7 @@ class my_bfd_mon : public eos::agent_handler,
 };
 
 int main(int argc, char ** argv) {
+    openlog("myBFDLog",0,LOG_LOCAL4);
     eos::sdk sdk(AGENT_NAME);
     my_bfd_mon agent(sdk);
     sdk.main_loop(argc,argv);
