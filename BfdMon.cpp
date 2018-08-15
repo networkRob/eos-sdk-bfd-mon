@@ -98,6 +98,7 @@ class my_bfd_mon : public eos::agent_handler,
                 auto bfd_key = eos::bfd_session_key_t(ip1,vrf1,eos::BFD_SESSION_TYPE_NORMAL,intf1);
                 bfd_session_mgr_->session_set(bfd_key);
                 for (int i = peer_error_count - 1; i >= 0;i--) {
+                    _to_syslog(peer_error[i][0]+peer_error[i][1]);
                     if (peer_error[i][0] == optionName) {
                         status_delete(peer_error[i]);
                         peer_error.erase(peer_error.begin()+i);
