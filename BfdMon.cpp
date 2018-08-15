@@ -117,9 +117,15 @@ class my_bfd_mon : public eos::agent_handler,
             //
             time_t now = time(0);
             std::string l_time_change = ctime(&now);
-            std::string t_msg = "The State of " +  bfdKey.ip_addr().to_string() + " is now " + bfdState;
+            std::string bfIP = bfdKey.ip_addr().to_string();
+            std::string t_msg = "The State of " +  bfIP + " is now " + bfdState;
             t.trace5(t_msg.c_str());
             status_update("Total BFD Peer/State changes",std::to_string(bfdChanges));
+            for (int i = 0; i < peer_list_count; i++) {
+                if (peer_list[i].ip == bfIP and peer_list[i].intf == bfdKey.intf().to_string()) {
+                    peer_list[i].stat_chg++;
+                }
+            }
             _update_status();
         }
     private:
