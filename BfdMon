@@ -45,7 +45,7 @@ import time
 import re
 
 __author__ = 'rmartin'
-__version__ = 1.4
+__version__ = 1.5
 
 
 class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
@@ -58,12 +58,17 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         self.numBFDChanges_ = 0
         self.tracer.trace0("Constructed")
         self.peers = {}
+        self.peer_errors = []
 
     def on_initialized(self): 
         self.tracer.trace0("We are initialized!")
         self.agentMgr_.status_set("Total BFD Peer/State changes","0")
         self.watch_all_bfd_sessions(True)
         self.to_syslog('BFD Agent Initialized')
+        for r1 in self.agentMgr_.agent_option_iter():
+            self.opt_name = r1
+            self.opt_value = self.agentMgr_.agent_option(r1)
+            self.on_agent_option(self.opt_name,self.opt_value)
 
     def to_syslog(self,sys_msg):
         syslog.syslog("%%myBFD-6-LOG: BFD State Change: %s"%sys_msg)
@@ -106,20 +111,45 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
         elif not self.peers.has_key(optionName):
             self.peers[optionName] = {'last':'N/A','stat_chg':0}
         o_value = value.split(',')
+        self.IPStatus = True
+        self.IntfStatus = True # Not sure if needed
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",o_value[0]):
+            for r1 in o_value[0].split('.'):
+                if 0 > int(r1) or int(r1) > 255:
+                    self.IPStatus = False
+        else:
+            self.IPStatus = False
+        if self.IPStatus:
             self.peers[optionName]['ip'] = o_value[0]
+        else:
+            self.peer_errors.append([optionName,'ip'])
+            self.agentMgr_.status_set("Incorrect IP Value for %s"%optionName,o_value[0])
+            self.peers[optionName]['ip'] = ''
         if re.match(r"Ethernet\d+$",o_value[1],re.IGNORECASE) or re.match(r"Ethernet\d+//?\d+$",o_value[1],re.IGNORECASE):
             eth_val = o_value[1].capitalize()
             self.peers[optionName]['intf'] = eth_val
         elif re.match(r"Eth\d+$",o_value[1],re.IGNORECASE) or re.match(r"Eth\d+//?\d+$",o_value[1],re.IGNORECASE):
             eth_val = o_value[1].lower().replace('eth','Ethernet')
             self.peers[optionName]['intf'] = eth_val
+        else:
+            self.IntfStatus = False #Not sure if needed
+            self.agentMgr_.status_set("Incorrect Interface for %s"%optionName,o_value[1])
+            self.peers[optionName]['intf'] = ''
+            self.peer_errors.append([optionName,'intf'])
         if len(o_value) == 3:
             b_vrf = o_value[2]
         else:
             b_vrf = 'default'
         self.peers[optionName]['vrf'] = b_vrf
-        if self.peers[optionName].has_key('ip') and self.peers[optionName].has_key('intf') and self.peers[optionName].has_key('vrf'):
+        if self.peers[optionName]['ip'] != '' and self.peers[optionName]['intf'] != '' and self.peers[optionName].has_key('vrf'):
+            for r1 in reversed(self.peer_errors):
+                if r1[0] == optionName:
+                    if r1[1] == 'ip':
+                        self.agentMgr_.status_del("Incorrect IP Value for %s"%optionName)
+                        self.peer_errors.pop(self.peer_errors.index(r1))
+                    elif r1[1] == 'intf':
+                        self.agentMgr_.status_del("Incorrect Interface for %s"%optionName)
+                        self.peer_errors.pop(self.peer_errors.index(r1))
             self._create_session(optionName)
         self._update_status()
 
