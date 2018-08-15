@@ -59,7 +59,7 @@ class my_bfd_mon : public eos::agent_handler,
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
-            oIntf = o_value[1];
+            //oIntf = o_value[1];
             int resIP = _validate_IP(o_value[0]);
             if (resIP == 1) {
                 oIP = o_value[0];
@@ -68,7 +68,17 @@ class my_bfd_mon : public eos::agent_handler,
                 status_update("Incorrect IP Value for "+optionName,o_value[0]);
                 oIP = "";
             }
-            if (oIP != "") {
+            if (_checkString(_strLower(o_value[1]),"ethernet")) {
+                oIntf = _strCapital(o_value[1]);
+            }
+            else if (_checkString(_strLower(o_value[1]),"eth")) {
+                oIntf = _strCapital(_replace_string(_strLower(o_value[1]),"eth","ethernet"));
+            }
+            else {
+                status_update("Incorrect Interface for " + optionName,o_value[1]);
+                oIntf = "";
+            }
+            if (oIP != "" and oIntf != "") {
                 eos::ip_addr_t ip1(oIP);
                 eos::intf_id_t intf1(oIntf);
                 tmpPeer.name = optionName;
@@ -88,7 +98,7 @@ class my_bfd_mon : public eos::agent_handler,
                 auto bfd_key = eos::bfd_session_key_t(ip1,vrf1,eos::BFD_SESSION_TYPE_NORMAL,intf1);
                 bfd_session_mgr_->session_set(bfd_key);
                 for (int i = 0; i<peer_error_count;i++) {
-                    if (peer_error[i] == optionName) {
+                    if (peer_error[i][0] == optionName) {
                         peer_error.erase(peer_error.begin()+i);
                         peer_error_count--;
                         status_delete(optionName);
@@ -96,12 +106,22 @@ class my_bfd_mon : public eos::agent_handler,
                 }
             }
             else {
-                peer_error.push_back(optionName);
-                peer_error_count++;
+                if (oIP == "") {
+                    std::vector<std::string> tmp;
+                    tmp.push_back(optionName);
+                    tmp.push_back("ip");
+                    peer_error.push_back(tmp);
+                    peer_error_count++;
+                }
+                if (oIntf == "") {
+                    std::vector<std::string> tmp;
+                    tmp.push_back(optionName);
+                    tmp.push_back("intf");
+                    peer_error.push_back(tmp);
+                    peer_error_count++;
+                }
             }
             _update_status();
-            
-            
         }
 
         // SDK Function that is called when a registered BFD session changes status
@@ -126,7 +146,7 @@ class my_bfd_mon : public eos::agent_handler,
         }
     private:
         int bfdChanges = 0; //# of BFD Peer/State changes
-        std::vector<std::string> peer_error; //array to keep track of bad option values
+        std::vector<std::vector<std::string>> peer_error; //vector array of vector array to keep track of bad option values
         int peer_error_count = 0;
         struct peers {
             std::string name;
@@ -152,6 +172,37 @@ class my_bfd_mon : public eos::agent_handler,
             char str[INET_ADDRSTRLEN];
             int result = inet_pton(AF_INET,uIP.c_str(),&(sa.sin_addr));
             return result;
+        }
+
+        // Function to capitalize the first character of a string
+        std::string _strCapital(std::string u_input) {
+            std::string new_string;
+            new_string += toupper(u_input[0]);
+            for (int i =1; i < u_input.length();++i) {
+                new_string += tolower(u_input[i]);
+            }
+            return new_string;
+        }
+
+        // Function to change string to lowercase
+        std::string _strLower(std::string u_input) {
+            std::string new_string;
+            for (int i = 0; i < u_input.length(); ++i) {
+                new_string += tolower(u_input[i]);
+            }
+            return new_string;
+        }
+
+        // Function to check for pattern in string
+        bool _checkString(std::string u_input, std::string patt) {
+            int pos;
+            pos = u_input.find(patt);
+            if (pos >= 0) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
 
         // Function to replace substring within a string

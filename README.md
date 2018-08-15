@@ -5,6 +5,9 @@ There are 2 versions of this sdk agent.  One written in Python, and the other in
     Missing Features:
     - Ability to write status changes to syslog
     - Regex to verify IP addresses and interface names
+
+#### version 2.0
+This release adds a C++ version of the agent. 
     
 #### version 1.5
 Corrected an issue when the agent initialized with pre-configured option/values in the config file, it wouldn't load those configs.  Also added logic to notify on the `show daemon BfdMon` command that an incorrect IP address or Intf was entered.
