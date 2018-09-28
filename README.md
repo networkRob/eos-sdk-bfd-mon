@@ -28,7 +28,8 @@ bash /mnt/flash/profileBFD
 ```
 3. Verify BFD is running on the switch and remote switch.  You can verify with the following EOS command: `show bfd neighbors`
 4. In EOS config mode perform the following steps:
-```config
+```
+config
 daemon BfdMon
 exec /mnt/flash/BfdMon
 no shut
