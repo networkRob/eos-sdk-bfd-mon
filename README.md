@@ -1,40 +1,50 @@
 # EOS SDK BFD Monitor
 There are 2 versions of this sdk agent.  One written in Python, and the other in c++.  Below are their current status:
-1. Python: BfdMon [stable]
-2. C++: BfdMon.cpp [stable]
-
-## Python Version   
-#### version 1.5
-Corrected an issue when the agent initialized with pre-configured option/values in the config file, it wouldn't load those configs.  Also added logic to notify on the `show daemon BfdMon` command that an incorrect IP address or Intf was entered.
-
-#### verson 1.4
-This will create an EOS agent to monitor BFD status changes.  As of this moment, when a BFD session status changes, it will create a switch SYSLOG message.  This can be modified further to create a SNMP Trap message to a remote syslog server.
+1. Python: source/Python/BfdMon [stable]
+2. C++: source/C++/BfdMon.cpp [stable]
 
 
-## C++ Version
-#### version 2.0
-This release adds a C++ version of the agent.
+## Switch Setup 
 
-### C++ Compiling
-In order to use `BfdMon.cpp`, follow the instructions on the [Arista's EOS SDK GitHub](https://github.com/aristanetworks/EosSdk/wiki).
-This link will help with compiling the `BfdMon.cpp` file to be used as an agent.
-
-
-## Switch Setup (Python & C++)
-1. Copy `BfdMon`, `BfdMon.mp` and `profileBFD` to `/mnt/flash/` on the switch
-2. Run the following command on the switch: 
+### Install
+1. Copy `BfdMon-x.x.x-x.swix` to `/mnt/flash/` on the switch or to the `flash:` directory.
+2. Copy and install he `.swix` file to the extensions directory from within EOS.  Below command output shows the copy and install process for the extension.
 ```
-bash /mnt/flash/profileBFD
+7280-rtr-01#copy flash:BfdMon-1.6.0-1.swix extensions:
+Copy completed successfully.
+7280-rtr-01#show extensions
+Name                         Version/Release      Status      Extension
+---------------------------- -------------------- ----------- ---------
+BfdMon-1.6.0-1.swix          1.6.0/1              A, NI       1
+TerminAttr-1.5.0-1.swix      v1.5.0/1             A, I        24
+
+
+A: available | NA: not available | I: installed | NI: not installed | F: forced
+7280-rtr-01#extension BfdMon-1.6.0-1.swix
+7280-rtr-01#show extensions
+Name                         Version/Release      Status      Extension
+---------------------------- -------------------- ----------- ---------
+BfdMon-1.6.0-1.swix          1.6.0/1              A, I        1
+TerminAttr-1.5.0-1.swix      v1.5.0/1             A, I        24
+
+
+A: available | NA: not available | I: installed | NI: not installed | F: forced
 ```
-3. Verify BFD is running on the switch and remote switch.  You can verify with the following EOS command: `show bfd neighbors`
-4. In EOS config mode perform the following steps:
+3. In order for the extension to be installed on-boot, enter the following command:
+```
+7280-rtr-01#copy extensions: boot-extensions
+```
+
+## BFD Agent Configuration
+1. Verify BFD is running on the switch and remote switch.  You can verify with the following EOS command: `show bfd neighbors`
+2. In EOS config mode perform the following steps: 
 ```
 config
 daemon BfdMon
-exec /mnt/flash/BfdMon
+exec /usr/bin/BfdMon
 no shut
 ```
-5. In order for this agent to receive updates on BFD sessions, the following commands will need to be taken:
+3. In order for this agent to receive updates on BFD sessions, the following commands will need to be taken:
 ```
 config
 daemon BfdMon
@@ -50,12 +60,6 @@ config
 daemon BfdMon
 option RTR-02 value 10.0.0.2,Ethernet1,default
 ```
-6. To make this agent persist a reboot/power-cycle.  We will need to create a `rc.eos` file in the `/mnt/flash` directory of the switch.  The contents for `rc.eos` are as follows:
-```
-#!/bin/bash
-cp /mnt/flash/BfdMon.mp /usr/lib/SysdbMountProfiles/BfdMon
-```
-
 
 #### Sample output of `show daemon BfdMon`
 ```

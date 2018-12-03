@@ -1,4 +1,3 @@
-sup/
-include/
 .DS_Store
 .vscode/
+rpmbuild/
