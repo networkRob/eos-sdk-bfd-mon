@@ -1,7 +1,9 @@
 # EOS SDK BFD Monitor
 There are 2 versions of this sdk agent.  One written in Python, and the other in c++.  Below are their current status:
 1. Python: source/Python/BfdMon [stable]
+- Supports Ethernet and Vlan interfaces for BGP neighbors for BFD monitoring.
 2. C++: source/C++/BfdMon.cpp [stable]
+- Currently supports Ethernet interfaces for BGP neighbors for BFD monitoring.
 
 
 ## Switch Setup 
