@@ -45,7 +45,7 @@ import time
 import re
 
 __author__ = 'rmartin'
-__version__ = 1.6
+__version__ = 1.7
 
 
 class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
@@ -125,11 +125,19 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
             self.peer_errors.append([optionName,'ip'])
             self.agentMgr_.status_set("Incorrect IP Value for %s"%optionName,o_value[0])
             self.peers[optionName]['ip'] = ''
+        # Perform check to verify provided interface is Ethernet or Vlan
         if re.match(r"Ethernet\d+$",o_value[1],re.IGNORECASE) or re.match(r"Ethernet\d+//?\d+$",o_value[1],re.IGNORECASE):
             eth_val = o_value[1].capitalize()
             self.peers[optionName]['intf'] = eth_val
         elif re.match(r"Eth\d+$",o_value[1],re.IGNORECASE) or re.match(r"Eth\d+//?\d+$",o_value[1],re.IGNORECASE):
             eth_val = o_value[1].lower().replace('eth','Ethernet')
+            self.peers[optionName]['intf'] = eth_val
+        # Adding check for Vlan Interfaces
+        elif re.match(r"Vl\d+$",o_value[1],re.IGNORECASE):
+            eth_val = o_value[1].lower().replace('vl','Vlan')
+            self.peers[optionName]['intf'] = eth_val
+        elif re.match(r"Vlan\d+$",o_value[1],re.IGNORECASE):
+            eth_val = o_value[1].capitalize()
             self.peers[optionName]['intf'] = eth_val
         else:
             self.IntfStatus = False #Not sure if needed

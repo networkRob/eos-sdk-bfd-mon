@@ -1,4 +1,9 @@
 # EOS SDK BFD Monitor - Python
+#### version 1.7
+Added the ability to leverage an SVI for the neighbor peer connection. The option comand would be inputed as follows:
+```
+option RTR-02 value 10.0.0.2,Vlan12,default
+```
 #### version 1.6
 Introduced a .swix install for the Python version of the agent.
 
