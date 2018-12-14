@@ -1,4 +1,6 @@
 # EOS SDK BFD Monitor - Python
+#### version 1.8
+Removed unnecesary mount profile options to SysDB.  The additional profiles that were none existent in prior EOS releases were causing crashes of the agent.
 #### version 1.7
 Added the ability to leverage an SVI for the neighbor peer connection. The option comand would be inputed as follows:
 ```
