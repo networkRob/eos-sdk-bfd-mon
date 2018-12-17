@@ -45,7 +45,7 @@ import time
 import re
 
 __author__ = 'rmartin'
-__version__ = 1.7
+__version__ = 1.8
 
 
 class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
@@ -133,11 +133,11 @@ class BFDMON(eossdk.AgentHandler,eossdk.BfdSessionHandler):
             eth_val = o_value[1].lower().replace('eth','Ethernet')
             self.peers[optionName]['intf'] = eth_val
         # Adding check for Vlan Interfaces
-        elif re.match(r"Vl\d+$",o_value[1],re.IGNORECASE):
-            eth_val = o_value[1].lower().replace('vl','Vlan')
-            self.peers[optionName]['intf'] = eth_val
         elif re.match(r"Vlan\d+$",o_value[1],re.IGNORECASE):
             eth_val = o_value[1].capitalize()
+            self.peers[optionName]['intf'] = eth_val
+        elif re.match(r"Vl\d+$",o_value[1],re.IGNORECASE):
+            eth_val = o_value[1].lower().replace('vl','Vlan')
             self.peers[optionName]['intf'] = eth_val
         else:
             self.IntfStatus = False #Not sure if needed
