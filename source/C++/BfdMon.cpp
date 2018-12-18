@@ -68,7 +68,7 @@ class my_bfd_mon : public eos::agent_handler,
             } else if (_checkString(_strLower(o_value[1]),"eth")) {
                 oIntf = _strCapital(_replace_string(_strLower(o_value[1]),"eth","ethernet"));
             } 
-            // Adding in VLAN Check
+            // Adding in VLAN Check for SVIs
             else if (_checkString(_strLower(o_value[1]),"vlan")) { 
                 oIntf = _strCapital(o_value[1]);
             } else if (_checkString(_strLower(o_value[1]),"vl")) {
