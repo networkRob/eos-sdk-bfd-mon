@@ -3,8 +3,8 @@
 // Written by: Rob Martin 2018
 //
 //
-// author: rmartin
-// version: 2.0
+// author: robmartin
+// version: 2.1
 
 #include <eos/agent.h>
 #include <eos/sdk.h>
@@ -67,6 +67,10 @@ class my_bfd_mon : public eos::agent_handler,
                 oIntf = _strCapital(o_value[1]);
             } else if (_checkString(_strLower(o_value[1]),"eth")) {
                 oIntf = _strCapital(_replace_string(_strLower(o_value[1]),"eth","ethernet"));
+            } else if (_checkString(_strLower(o_value[1]),"vlan")) {
+                oIntf = _strCapital(o_value[1]);
+            } else if (_checkString(_strLower(o_value[1]),"vl")) {
+                oIntf = _strCapital(_replace_string(_strLower(o_value[1]),"vl","vlan"));
             } else {
                 status_update("Incorrect Interface for " + optionName,o_value[1]);
                 oIntf = "";
