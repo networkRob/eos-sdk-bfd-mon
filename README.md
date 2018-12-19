@@ -3,8 +3,9 @@ There are 2 versions of this sdk agent.  One written in Python, and the other in
 1. Python: source/Python/BfdMon [stable]
 - Supports Ethernet and Vlan interfaces for BGP neighbors for BFD monitoring.
 2. C++: source/C++/BfdMon.cpp [stable]
-- Currently supports Ethernet interfaces for BGP neighbors for BFD monitoring.
+- Supports Ethernet and Vlan interfaces for BGP neighbors for BFD monitoring.
 
+The .swix extensions can be found in the [release/](release/) directory.
 
 ## Switch Setup 
 
