@@ -3,8 +3,8 @@
 // Written by: Rob Martin 2018
 //
 //
-// author: rmartin
-// version: 2.0
+// author: robmartin
+// version: 2.1
 
 #include <eos/agent.h>
 #include <eos/sdk.h>
@@ -56,22 +56,24 @@ class my_bfd_mon : public eos::agent_handler,
             peers tmpPeer;
             o_value = split(value);
             int value_length = o_value.size();
-            //oIntf = o_value[1];
             int resIP = _validate_IP(o_value[0]);
             if (resIP == 1) {
                 oIP = o_value[0];
-            }
-            else {
+            } else {
                 status_update("Incorrect IP Value for "+optionName,o_value[0]);
                 oIP = "";
             }
             if (_checkString(_strLower(o_value[1]),"ethernet")) {
                 oIntf = _strCapital(o_value[1]);
-            }
-            else if (_checkString(_strLower(o_value[1]),"eth")) {
+            } else if (_checkString(_strLower(o_value[1]),"eth")) {
                 oIntf = _strCapital(_replace_string(_strLower(o_value[1]),"eth","ethernet"));
-            }
-            else {
+            } 
+            // Adding in VLAN Check for SVIs
+            else if (_checkString(_strLower(o_value[1]),"vlan")) { 
+                oIntf = _strCapital(o_value[1]);
+            } else if (_checkString(_strLower(o_value[1]),"vl")) {
+                oIntf = _strCapital(_replace_string(_strLower(o_value[1]),"vl","vlan"));
+            } else {
                 status_update("Incorrect Interface for " + optionName,o_value[1]);
                 oIntf = "";
             }
@@ -86,8 +88,7 @@ class my_bfd_mon : public eos::agent_handler,
                 if (o_value.size() == 3){
                     vrf1 = o_value[2];
                     tmpPeer.vrf = o_value[2];
-                }
-                else {
+                } else {
                     vrf1 = "default";
                     tmpPeer.vrf = "default";
                 }
@@ -96,16 +97,14 @@ class my_bfd_mon : public eos::agent_handler,
                 bfd_session_mgr_->session_set(bfd_key);
                 _check_peer_error(optionName,"ip");
                 _check_peer_error(optionName,"intf");
-            }
-            else {
+            } else {
                 if (oIP == "") {
                     std::vector<std::string> tmp;
                     tmp.push_back(optionName);
                     tmp.push_back("ip");
                     peer_error.push_back(tmp);
                     peer_error_count++;
-                }
-                else if (oIP != "") {
+                } else if (oIP != "") {
                     _check_peer_error(optionName,"ip");
                 }
                 if (oIntf == "") {
@@ -114,8 +113,7 @@ class my_bfd_mon : public eos::agent_handler,
                     tmp.push_back("intf");
                     peer_error.push_back(tmp);
                     peer_error_count++;
-                }
-                else if (oIntf != "") {
+                } else if (oIntf != "") {
                     _check_peer_error(optionName,"intf");
                 }
             }
@@ -161,14 +159,14 @@ class my_bfd_mon : public eos::agent_handler,
         // Function to iterate through peer_error list and remove any corrected option/values
         void _check_peer_error(std::string optName,std::string optType) {
             for (int i = peer_error_count - 1; i >= 0;i--) {
-                    if (peer_error[i][0] == optName) {
-                        if (peer_error[i][1] == optType) {
-                            status_delete(peer_error[i]);
-                            peer_error.erase(peer_error.begin()+i);
-                            peer_error_count--;
-                        }
+                if (peer_error[i][0] == optName) {
+                    if (peer_error[i][1] == optType) {
+                        status_delete(peer_error[i]);
+                        peer_error.erase(peer_error.begin()+i);
+                        peer_error_count--;
                     }
                 }
+            }
         }
 
         // Function that will write string message to syslog
@@ -210,8 +208,7 @@ class my_bfd_mon : public eos::agent_handler,
             pos = u_input.find(patt);
             if (pos >= 0) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -231,8 +228,7 @@ class my_bfd_mon : public eos::agent_handler,
             std::vector<std::string> mvalue;
             std::string token;
             std::istringstream ss(mstring);
-            while (std::getline(ss,token,','))
-            {
+            while (std::getline(ss,token,',')) {
                 mvalue.push_back(token);
             }
             return mvalue;
@@ -242,8 +238,7 @@ class my_bfd_mon : public eos::agent_handler,
         void status_delete(std::vector<std::string> s_value) {
             if (s_value[1] == "ip") {
                 agent_mgr->status_del("Incorrect IP Value for " + s_value[0]);
-            }
-            else if (s_value[1] == "intf") {
+            } else if (s_value[1] == "intf") {
                 agent_mgr->status_del("Incorrect Interface for " + s_value[0]);
             }
             
